@@ -1,0 +1,56 @@
+import pandas as pd
+
+# Load Excel file
+df = pd.read_excel('gender_bias_data.xlsx')
+
+# Preview the dataset
+print(df.head())
+
+import pandas as pd
+import numpy as np
+
+# Create the dataset
+data = {
+    "Word": ["Doctor", "Nurse", "Engineer", "Teacher", "Chef"],
+    "Embedding": [
+        [0.1, 0.2, 0.3, 0.4],
+        [-0.2, 0.3, 0.1, -0.4],
+        [0.3, -0.1, 0.5, 0.2],
+        [-0.4, 0.1, -0.3, -0.2],
+        [0.2, -0.2, 0.4, 0.3],
+    ],
+    "Gender_Bias_Score": [0.8, -0.9, 0.6, -0.7, 0.1],
+}
+
+# Save the dataset to an Excel file
+df = pd.DataFrame(data)
+df.to_excel("gender_bias_data.xlsx", index=False)
+print("Dataset saved to 'gender_bias_data.xlsx'")
+
+from sklearn.decomposition import PCA
+import pandas as pd
+import numpy as np
+
+# Load the dataset
+df = pd.read_excel("gender_bias_data.xlsx")
+df["Embedding"] = df["Embedding"].apply(lambda x: np.array(eval(x)))
+
+# Extract embeddings
+embeddings = np.vstack(df["Embedding"].values)
+
+# Step 1: Find the gender direction
+pca = PCA(n_components=1)
+gender_direction = pca.fit(embeddings).components_[0]
+
+# Step 2: Neutralize embeddings
+def neutralize(word_embedding, gender_direction):
+    projection = np.dot(word_embedding, gender_direction) * gender_direction
+    return word_embedding - projection
+
+df["Neutralized_Embedding"] = df["Embedding"].apply(
+    lambda x: neutralize(x, gender_direction)
+)
+
+# Step 3: Save the debiased data
+df.to_excel("debiased_gender_bias_data.xlsx", index=False)
+print("Debiased dataset saved to 'debiased_gender_bias_data.xlsx'")
